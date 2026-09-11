@@ -1,0 +1,54 @@
+{
+  "name": "krushimitra-ai",
+  "version": "1.0.0",
+  "description": "KrushiMitra AI — Agriculture Shop Billing, Inventory & Management Software",
+  "private": true,
+  "main": "electron/main.js",
+  "author": "KrushiMitra",
+  "scripts": {
+    "install:all": "npm install && npm install --prefix frontend && npm install --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:app": "concurrently -k -n FRONT,BACK -c cyan,yellow \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "electron:dev": "cross-env NODE_ENV=development concurrently -k -n FRONT,BACK,ELECTRON -c cyan,yellow,green \"npm run dev:frontend\" \"npm run dev:backend\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build:frontend": "npm run build --prefix frontend",
+    "electron:build": "npm run electron:build:frontend && electron-builder",
+    "electron:preview": "npm run electron:build:frontend && cross-env NODE_ENV=production electron ."
+  },
+  "build": {
+    "appId": "com.krushimitra.ai",
+    "productName": "KrushiMitra AI",
+    "icon": "frontend/public/favicon.ico",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      "frontend/dist/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": ["nsis"],
+      "icon": "frontend/public/favicon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.business"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3",
+    "cross-env": "^10.1.0",
+    "electron": "^43.1.0",
+    "electron-builder": "^26.15.3",
+    "wait-on": "^9.0.10"
+  }
+}
