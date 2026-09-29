@@ -21,18 +21,20 @@ import ForgotPassword   from './pages/ForgotPassword';
 import EmailVerification from './pages/EmailVerification';
 
 // ── App Pages ──────────────────────────────────────────────────────────────────
-import Dashboard    from './pages/Dashboard';
-import Products     from './pages/Products';
-import POS          from './pages/POS';
-import Settings     from './pages/Settings';
-import Customers    from './pages/Customers';
-import Suppliers    from './pages/Suppliers';
-import Inventory    from './pages/Inventory';
-import Reports      from './pages/Reports';
-import Expenses     from './pages/Expenses';
-import Unauthorized from './pages/Unauthorized';
-import Placeholder  from './pages/Placeholder';
-import AIAssistant  from './components/AIAssistant';
+import Dashboard        from './pages/Dashboard';
+import Products         from './pages/Products';
+import Categories       from './pages/Categories';
+import POS              from './pages/POS';
+import Settings         from './pages/Settings';
+import Customers        from './pages/Customers';
+import Suppliers        from './pages/Suppliers';
+import Inventory        from './pages/Inventory';
+import Reports          from './pages/Reports';
+import Expenses         from './pages/Expenses';
+import UsersManagement  from './pages/UsersManagement';
+import Unauthorized     from './pages/Unauthorized';
+import AIAssistant      from './components/AIAssistant';
+
 
 function App() {
   return (
@@ -82,7 +84,7 @@ function App() {
                 {/* Category Management — admin only */}
                 <Route path="categories" element={
                   <ProtectedRoute allowedRoles={['admin']}>
-                    <Placeholder title="Category Management" description="Manage product categories — coming in Phase 2" icon="Tags" />
+                    <Categories />
                   </ProtectedRoute>
                 } />
 
@@ -124,7 +126,7 @@ function App() {
                 {/* User Management — admin only */}
                 <Route path="users" element={
                   <ProtectedRoute allowedRoles={['admin']}>
-                    <Placeholder title="User Management" description="Employee accounts and role management — coming in Phase 8" icon="UserCog" />
+                    <UsersManagement />
                   </ProtectedRoute>
                 } />
 

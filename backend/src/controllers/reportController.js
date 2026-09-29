@@ -422,3 +422,145 @@ export const getCashBook = asyncHandler(async (req, res) => {
     },
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// @route   GET /api/reports/summary
+// @desc    Summary stats for Reports page (revenue, bills, GST, discount)
+// @access  Admin
+// ─────────────────────────────────────────────────────────────────────────────
+export const getSummaryReport = asyncHandler(async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const start = startDate ? new Date(startDate) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const end   = endDate   ? new Date(endDate)   : new Date();
+
+  const result = await Bill.aggregate([
+    { $match: { date: { $gte: start, $lte: end }, status: { $ne: 'Cancelled' } } },
+    { $group: {
+        _id: null,
+        totalRevenue:  { $sum: '$grandTotal' },
+        totalBills:    { $sum: 1 },
+        totalDiscount: { $sum: '$totalDiscount' },
+        totalGST:      { $sum: '$totalGst' },
+        totalCgst:     { $sum: '$totalCgst' },
+        totalSgst:     { $sum: '$totalSgst' },
+        avgBillValue:  { $avg: '$grandTotal' },
+        taxableAmount: { $sum: '$subtotal' },
+      }
+    },
+  ]);
+
+  const data = result[0] || {
+    totalRevenue: 0, totalBills: 0, totalDiscount: 0,
+    totalGST: 0, totalCgst: 0, totalSgst: 0,
+    avgBillValue: 0, taxableAmount: 0,
+  };
+
+  // Round numeric values
+  data.avgBillValue = Math.round(data.avgBillValue || 0);
+  data.cgst = data.totalCgst || 0;
+  data.sgst = data.totalSgst || 0;
+
+  res.json({ success: true, data });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// @route   GET /api/reports/sales-chart
+// @desc    Sales trend data grouped by day for the Reports chart
+// @access  Admin
+// ─────────────────────────────────────────────────────────────────────────────
+export const getSalesChartReport = asyncHandler(async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const start = startDate ? new Date(startDate) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const end   = endDate   ? new Date(endDate)   : new Date();
+
+  const trend = await Bill.aggregate([
+    { $match: { date: { $gte: start, $lte: end }, status: { $ne: 'Cancelled' } } },
+    { $group: {
+        _id: {
+          year:  { $year: '$date' },
+          month: { $month: '$date' },
+          day:   { $dayOfMonth: '$date' },
+        },
+        total: { $sum: '$grandTotal' },
+        count: { $sum: 1 },
+      }
+    },
+    { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } },
+  ]);
+
+  // Format labels for the chart
+  const data = trend.map(r => ({
+    _id: r._id,
+    label: `${r._id.day}/${r._id.month}`,
+    total: Math.round(r.total),
+    count: r.count,
+  }));
+
+  res.json({ success: true, data });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// @route   GET /api/reports/top-products
+// @desc    Top selling products by revenue
+// @access  Admin
+// ─────────────────────────────────────────────────────────────────────────────
+export const getTopProductsReport = asyncHandler(async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const start = startDate ? new Date(startDate) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const end   = endDate   ? new Date(endDate)   : new Date();
+
+  const products = await Bill.aggregate([
+    { $match: { date: { $gte: start, $lte: end }, status: { $ne: 'Cancelled' } } },
+    { $unwind: '$items' },
+    { $group: {
+        _id: '$items.productName',
+        name:    { $first: '$items.productName' },
+        revenue: { $sum: '$items.total' },
+        qty:     { $sum: '$items.quantity' },
+        bills:   { $sum: 1 },
+      }
+    },
+    { $sort: { revenue: -1 } },
+    { $limit: 10 },
+  ]);
+
+  res.json({ success: true, data: products });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// @route   GET /api/reports/export
+// @desc    Export report data as CSV
+// @access  Admin
+// ─────────────────────────────────────────────────────────────────────────────
+export const exportReport = asyncHandler(async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const start = startDate ? new Date(startDate) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  const end   = endDate   ? new Date(endDate)   : new Date();
+
+  const bills = await Bill.find({
+    date: { $gte: start, $lte: end },
+    status: { $ne: 'Cancelled' },
+  })
+    .sort({ date: -1 })
+    .select('invoiceNo customerName date subtotal totalDiscount totalGst grandTotal status')
+    .lean();
+
+  // Build CSV
+  const headers = ['Invoice No', 'Customer', 'Date', 'Subtotal', 'Discount', 'GST', 'Grand Total', 'Status'];
+  const rows = bills.map(b => [
+    b.invoiceNo,
+    `"${(b.customerName || 'Walk-in').replace(/"/g, '""')}"`,
+    new Date(b.date).toLocaleDateString('en-IN'),
+    (b.subtotal || 0).toFixed(2),
+    (b.totalDiscount || 0).toFixed(2),
+    (b.totalGst || 0).toFixed(2),
+    (b.grandTotal || 0).toFixed(2),
+    b.status,
+  ]);
+
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename=KrushiMitra_Report.csv`);
+  res.send(csv);
+});

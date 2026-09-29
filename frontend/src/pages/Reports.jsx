@@ -79,10 +79,10 @@ const Reports = () => {
         api.get('/reports/top-products', { params }),
       ]);
 
-      if (summaryRes.status === 'fulfilled') setSummary(summaryRes.value.data.data);
-      if (productRes.status === 'fulfilled') setTopProducts(productRes.value.data.data || []);
+      if (summaryRes.status === 'fulfilled') setSummary(summaryRes.value.data);
+      if (productRes.status === 'fulfilled') setTopProducts(productRes.value.data || []);
       if (salesRes.status === 'fulfilled') {
-        const d = salesRes.value.data.data || [];
+        const d = salesRes.value.data || [];
         setSalesChart({
           labels: d.map(r => r.label || r._id),
           datasets: [{

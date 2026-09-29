@@ -5,7 +5,7 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   Users, Plus, Search, Edit2, Trash2, Eye, X, Save,
   Phone, Mail, MapPin, CreditCard, AlertCircle, ChevronDown,
   TrendingUp, FileText, IndianRupee

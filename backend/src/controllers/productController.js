@@ -147,7 +147,7 @@ export const createProduct = asyncHandler(async (req, res) => {
   if (category && !mongoose.isValidObjectId(category)) {
     const cat = await Category.findOneAndUpdate(
       { name: category.trim() },
-      { name: category.trim(), color: 'bg-emerald-100 text-emerald-800' },
+      { $setOnInsert: { name: category.trim(), color: '#22c55e' } },
       { upsert: true, new: true }
     );
     category = cat._id;
@@ -174,12 +174,14 @@ export const createProduct = asyncHandler(async (req, res) => {
 
   const product = await Product.create({
     name, sku, barcode, hsnCode, category, supplier,
-    description, purchasePrice, sellingPrice,
-    mrp: mrp || sellingPrice,
+    description,
+    purchasePrice: Number(purchasePrice),
+    sellingPrice: Number(sellingPrice),
+    mrp: Number(mrp || sellingPrice),
     gstRate: gstRate ?? 18,
     gstInclusive: gstInclusive ?? false,
-    stock: stock ?? 0,
-    minStock: minStock ?? 5,
+    stock: Number(stock ?? 0),
+    minStock: Number(minStock ?? 5),
     unit: unit || 'piece',
     isActive: isActive ?? true,
     image: image || '',
@@ -224,7 +226,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
   if (category && !mongoose.isValidObjectId(category)) {
     const cat = await Category.findOneAndUpdate(
       { name: category.trim() },
-      { name: category.trim(), color: 'bg-emerald-100 text-emerald-800' },
+      { $setOnInsert: { name: category.trim(), color: '#22c55e' } },
       { upsert: true, new: true }
     );
     req.body.category = cat._id;

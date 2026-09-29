@@ -117,8 +117,16 @@ const Products = () => {
     }
 
     try {
-      const payload = { ...formData, sellingPrice: formData.price };
-      delete payload.price;
+      const payload = {
+        name: formData.name,
+        sku: formData.sku,
+        category: formData.category,
+        sellingPrice: Number(formData.price),
+        purchasePrice: Number(formData.purchasePrice),
+        stock: Number(formData.stock),
+        minStock: Number(formData.minStock),
+        supplier: formData.supplier || undefined,
+      };
 
       if (editingProduct) {
         // Update product
@@ -168,12 +176,12 @@ const Products = () => {
         p._id,
         `"${p.name.replace(/"/g, '""')}"`,
         p.sku,
-        p.category,
-        p.price,
-        p.purchasePrice,
+        p.category?.name || 'N/A',
+        p.sellingPrice || 0,
+        p.purchasePrice || 0,
         p.stock,
         p.minStock,
-        `"${p.supplier?.replace(/"/g, '""') || ''}"`
+        `"${(p.supplier?.name || '').replace(/"/g, '""')}"`
       ].join(','))
     ].join('\n');
 
@@ -191,7 +199,7 @@ const Products = () => {
   // Filter Catalog lists
   const filteredProducts = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase());
-    const matchCat = selectedCategory === '' || p.category === selectedCategory;
+    const matchCat = selectedCategory === '' || (p.category?.name || '') === selectedCategory;
     return matchSearch && matchCat;
   });
 
@@ -203,7 +211,7 @@ const Products = () => {
   const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
 
   // Statistics summaries
-  const totalProductsValue = products.reduce((acc, curr) => acc + (curr.stock * curr.price), 0);
+  const totalProductsValue = products.reduce((acc, curr) => acc + (curr.stock * (curr.sellingPrice || 0)), 0);
   const lowStockProductsCount = products.filter(p => p.stock <= p.minStock).length;
 
   return (

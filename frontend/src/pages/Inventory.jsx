@@ -30,13 +30,14 @@ const Inventory = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const params = { limit: 100, search };
+      const params = { limit: 100, q: search };
+
       if (tab === 'Low Stock') params.lowStock = true;
       if (tab === 'Near Expiry') params.nearExpiry = true;
       if (tab === 'Expired') params.expired = true;
 
-      const { data } = await api.get('/products', { params });
-      let items = data.data || [];
+      const res = await api.get('/products', { params });
+      let items = res.data || [];
 
       // Client-side filter for expiry tabs since backend may not support it
       const now = new Date();
@@ -58,10 +59,10 @@ const Inventory = () => {
     if (!qty || qty <= 0) { toast.error('Enter a valid quantity'); return; }
     setSaving(true);
     try {
-      const type = showStockModal.type;
+      const type = showStockModal.type; // 'in' | 'out'
       await api.post('/inventory/adjust', {
         productId: showStockModal.product._id,
-        type: type === 'in' ? 'stock_in' : 'stock_out',
+        adjustmentType: type === 'in' ? 'add' : 'subtract',
         quantity: qty,
         notes: stockNote,
       });
@@ -71,7 +72,7 @@ const Inventory = () => {
       setStockNote('');
       fetchProducts();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to adjust stock');
+      toast.error(err.message || 'Failed to adjust stock');
     } finally {
       setSaving(false);
     }

@@ -9,7 +9,7 @@ import { auth } from '../config/firebase';
 
 // ── Axios Instance ─────────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: '/api',           // Vite proxies /api → http://localhost:5000/api
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });
